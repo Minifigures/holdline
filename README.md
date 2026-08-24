@@ -71,6 +71,34 @@ Graceful degradation is a deliberate design choice, not a fallback of last resor
 
 ---
 
+## Testing and evaluation
+
+`npm test` runs 1,033 tests with Node's built-in runner (no framework install needed), and `npm run test:e2e` drives the real UI with Playwright.
+
+| Layer | What it checks | Count |
+|---|---|---|
+| Unit (`tests/rules.test.ts`) | Every seeded case gets the expected band, typology and recommendation; scores are bounded and equal the capped sum of signal weights; scoring is pure and deterministic; a $60k payment to a long-standing payee is not over-blocked; the safe-account phrase alone drives a hold | 17 |
+| Corpus, per payment (`tests/corpus.test.ts`) | 1,000 generated payments (900 benign, 100 fraud across five typologies): every benign payment must not be recommended for hold, every fraud payment must be flagged for review | 1,000 |
+| Corpus, aggregate | Recall, hold rate, typology accuracy and false-positive thresholds on the development corpus AND on two held-out corpora | 16 |
+| API (`tests/api.test.ts`) | `/api/triage` contract against a running server: provider report, full verdict shape for every seed, engine parity, 404 and 400 paths | 3 |
+| End to end (`tests/e2e.cjs`) | Real browser: red-dot count, select hero case, Hold, audit entry, metrics, buttons lock, Release path, no horizontal overflow at 390px | 1 run |
+
+### Generalization check (unseen data)
+
+There is no public transaction-level dataset for Canadian e-Transfers (banks do not release one), so the evaluation corpus is generated. To make sure the rules are not just memorizing the memos they were written against, the engine is scored on three corpora with the **same thresholds**:
+
+- **dev A** (seed 20260824, vocabulary A): the set the rules were tuned on.
+- **held-out B** (different seed, vocabulary B): paraphrased English plus French memos and payee names the rules were never written against.
+- **held-out C** (third seed, vocabulary B, 2,000 payments): a second draw to check B was not a lucky seed.
+
+| Corpus | Payments | Fraud flagged for review | Fraud recommended hold | Typology named correctly | Benign wrongly held | Benign flagged at all |
+|---|---|---|---|---|---|---|
+| dev A | 1,000 | 100.0% | 83.0% | 100.0% | 0.0% | 0.0% |
+| held-out B | 1,000 | 100.0% | 84.0% | 100.0% | 0.0% | 0.0% |
+| held-out C | 2,000 | 100.0% | 81.5% | 100.0% | 0.0% | 0.0% |
+
+The remaining 16 to 19% of fraud that lands on "escalate" rather than "hold" is mostly mule structuring and single-signal investment deposits, which is the intended behaviour: a second analyst looks before a customer is called. The benign side scoring 0% flagged says the generated benign traffic is cleaner than real traffic would be; the corpus generator (`tests/corpus.ts`) is the place to add harder negatives.
+
 ## Run locally
 
 ```bash

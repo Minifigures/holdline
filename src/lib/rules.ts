@@ -1,10 +1,11 @@
 import type { Decision, Payment, Signal, Typology, Verdict } from "./types";
 
-const URGENCY = /\b(urgent|urgently|today|now|immediately|asap|right away|deadline)\b/i;
-const IMPERSONATION = /\b(cra|revenue agency|safe account|security officer|fraud (dept|team|department)|bank (said|officer|security)|protect (your )?funds|investigator)\b/i;
-const INVESTMENT = /\b(guaranteed|\d+% (weekly|daily|monthly)|crypto|bitcoin|usdt|yield|advisor|trading)\b/i;
-const ROMANCE = /\b(love you|flight home|miss you|my dear|visa fee|customs)\b/i;
-const INVOICE = /\b(invoice|updated banking details|new account|per email|remittance)\b/i;
+// Concept vocabularies, English and French, matched case-insensitively. Each list names a concept, not a memo.
+const URGENCY = /\b(urgent(ly|e)?|today|now|immediately|asap|right away|deadline|within the hour|last chance|aujourd'hui|imm[ée]diatement|maintenant|tout de suite|d[ée]lai|derni[èe]re chance)\b/i;
+const IMPERSONATION = /\b(cra|arc|revenue agency|agence du revenu|service canada|safe ?(account|keeping)|holding account|compte s[ée]curis[ée]|compte de s[ée]curit[ée]|security (officer|team|dept|department)|fraud (dept|team|department|unit|officer)|bank (said|officer|security|investigator|agent)|agent de s[ée]curit[ée]|s[ée]curit[ée] bancaire|protect (your |my )?(funds|money|account)|prot[ée]ger (mes|vos|les) fonds|investigator|enqu[êe]teur|warrant|arrest|police|rcmp|interac (fraud|security)|tax (owed|arrears|debt)|imp[ôo]ts? (dus?|en retard)|gift ?cards?|cartes? cadeaux?)\b/i;
+const INVESTMENT = /\b(guaranteed|garanti[es]?|\d+ ?% ?(weekly|daily|monthly|per week|par semaine|par jour|par mois)|returns?|rendement|crypto(currency)?|bitcoin|btc|ethereum|usdt|tether|yield|advisor|conseiller|trading|trader|forex|fx|placement|investment|investissement|profit|mining|token|wallet|portefeuille)\b/i;
+const ROMANCE = /\b(love you|je t'aime|mon amour|my love|my dear|sweetheart|darling|ch[ée]ri[e]?|miss you|tu me manques|flight home|plane ticket|billet d'avion|visa fee|frais de visa|customs|douane|stuck (at|in)|hospital|h[ôo]pital|surgery|emergency|urgence m[ée]dicale|soldier|deployed|oil rig|widow)\b/i;
+const INVOICE = /\b(invoice|facture|updated banking details|new (bank )?account|nouveau compte|coordonn[ée]es bancaires|per email|par courriel|remittance|paiement fournisseur|supplier|fournisseur|wire instructions|changed (bank|account)|bank details? changed)\b/i;
 const FRACTION = /^\s*\d\s*\/\s*\d\s*$/;
 
 export function scorePayment(p: Payment): Verdict {
@@ -14,6 +15,8 @@ export function scorePayment(p: Payment): Verdict {
 
   if (p.payee.addedDaysAgo <= 7) {
     add("new-payee", "New payee", 30, `Payee added ${p.payee.addedDaysAgo === 0 ? "today" : `${p.payee.addedDaysAgo}d ago`} (${p.payee.email})`);
+  } else if (p.payee.addedDaysAgo <= 30) {
+    add("recent-payee", "Recent payee", 10, `Payee added ${p.payee.addedDaysAgo}d ago (${p.payee.email})`);
   }
   if (p.amount >= 5000) {
     add("large-amount", "Large amount", 15, `$${p.amount.toLocaleString("en-CA")} is above the $5,000 review threshold`);
@@ -22,13 +25,13 @@ export function scorePayment(p: Payment): Verdict {
     add("urgency", "Urgency language", 20, `Memo pressures immediate action: "${p.memo}"`);
   }
   if (IMPERSONATION.test(p.memo) || IMPERSONATION.test(p.payee.name)) {
-    add("impersonation", "Bank / CRA / safe-account phrasing", 30, "Memo or payee mimics a bank, CRA or fraud department. No institution asks clients to move money to a safe account.");
+    add("impersonation", "Bank / CRA / safe-account phrasing", 40, "Memo or payee mimics a bank, CRA or fraud department. No institution asks clients to move money to a safe account.");
   }
   if (p.device.isNew) {
     add("new-device", "New device", 15, p.device.label);
   }
   if (p.velocity24h >= 3) {
-    add("velocity", "High velocity", 10, `${p.velocity24h} outbound payments in 24h`);
+    add("velocity", "High velocity", p.velocity24h >= 5 ? 15 : 10, `${p.velocity24h} outbound payments in 24h`);
   }
   if (p.hourLocal < 6 || p.hourLocal >= 23) {
     add("off-hours", "Off-hours", 5, `Submitted at ${String(p.hourLocal).padStart(2, "0")}:00 local`);
@@ -36,14 +39,17 @@ export function scorePayment(p: Payment): Verdict {
   if (p.splitsUnderLimit >= 3 || FRACTION.test(p.memo)) {
     add("structuring", "Split under limit", 20, `${p.splitsUnderLimit} transfers just under the daily limit${FRACTION.test(p.memo) ? `, memo "${p.memo}" reads like a sequence` : ""}`);
   }
+  if (p.payee.addedDaysAgo > 7 && p.payee.addedDaysAgo <= 60 && p.velocity24h >= 2) {
+    add("recent-payee-repeat", "Repeat payments to a recent payee", 15, `Payee added ${p.payee.addedDaysAgo}d ago and already receiving repeat transfers`);
+  }
   if (p.sender.age >= 65 && signals.length >= 2) {
     add("vulnerable", "Vulnerable client", 10, `${p.sender.age}-year-old client, ${p.sender.tenureYears}y tenure, atypical pattern`);
   }
-  if (INVESTMENT.test(p.memo) && p.payee.addedDaysAgo <= 30) {
-    add("investment", "Too-good-to-be-true return", 20, "Guaranteed or weekly returns are a hallmark of investment fraud");
+  if ((INVESTMENT.test(p.memo) || INVESTMENT.test(p.payee.name)) && p.payee.addedDaysAgo <= 60) {
+    add("investment", "Too-good-to-be-true return", 30, "Guaranteed or weekly returns are a hallmark of investment fraud");
   }
-  if (ROMANCE.test(p.memo) && p.payee.addedDaysAgo <= 30) {
-    add("romance", "Romance pattern", 20, "Emotional memo to a recently added individual");
+  if (ROMANCE.test(p.memo) && p.payee.addedDaysAgo <= 60) {
+    add("romance", "Romance pattern", 30, "Emotional memo to a recently added individual");
   }
   if (INVOICE.test(p.memo) && p.payee.addedDaysAgo <= 7) {
     add("bec", "Changed supplier banking details", 25, "Supplier account changed by email is the classic invoice redirection pattern");

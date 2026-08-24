@@ -55,7 +55,9 @@ export default function Home() {
   );
 
   useEffect(() => {
-    if (provider !== "rules") void fetchBrief(selectedId);
+    if (provider === "rules") return;
+    const t = setTimeout(() => void fetchBrief(selectedId), 0);
+    return () => clearTimeout(t);
   }, [selectedId, provider, fetchBrief]);
 
   const selected = useMemo(() => payments.find((p) => p.id === selectedId) ?? payments[0], [payments, selectedId]);
