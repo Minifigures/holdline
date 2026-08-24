@@ -1,0 +1,81 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# private docs (never commit)
+PRD.md
+docs/PRD*.md
+TECHNICAL_ARCHITECTURE.md
+ARCHITECTURE.md
+docs/TECHNICAL_ARCHITECTURE*.md
+docs/ARCHITECTURE*.md
+DEMO_SCRIPT.md
+docs/DEMO_SCRIPT*.md
+docs/DEMO*.md
+docs/REHEARSAL*.md
+DEVPOST_SUBMISSION.md
+docs/DEVPOST*.md
+docs/SUBMISSION*.md
+ROADMAP.md
+docs/ROADMAP*.md
+docs/INTERNAL*.md
+NOTES.md
+TODO.md
+CLAUDE_NOTES.md
+SESSION_NOTES.md
+docs/HANDOFF*.md
+docs/ASSUMPTIONS.md
+
+# AI-tool / handoff docs
+COWORK.md
+COWORK*.md
+CLAUDE.md
+AGENTS.md
+.cursorrules
+.windsurfrules
+.cowork/
+.claude/
