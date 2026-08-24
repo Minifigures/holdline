@@ -5,7 +5,7 @@ _Human decides. AI explains. Every payment logged before it settles._
 
 HoldLine is a bank-side console that sits in front of the payment rail, not behind it. It scores every outbound Interac e-Transfer, Real-Time Rail (RTR) and wire payment before it leaves the bank, tells a fraud analyst **why** it looks wrong in plain English, and records the human decision (Hold, Release, Escalate) in an immutable audit log.
 
-**Live demo:** {{DEPLOY_URL}}
+**Live demo:** https://holdline-liart.vercel.app
 
 ![HoldLine console](docs/screenshot-console.png)
 
@@ -87,7 +87,7 @@ Open http://localhost:3000. No keys required.
 
 - **Next.js 16** (App Router) with **React 19**
 - **TypeScript**, strict mode, no `any`
-- **Tailwind CSS v4**, dark navy enterprise theme
+- **Tailwind CSS v4**, light ledger enterprise theme
 - **Vercel** for deployment
 - Optional: `@anthropic-ai/sdk`, Groq API, Google Gemini API
 
