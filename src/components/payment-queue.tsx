@@ -40,7 +40,7 @@ export function PaymentQueue({ payments, scores, selectedId, onSelect }: Props) 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <BankChip bank={p.bank} />
-                    <span className="truncate text-sm font-medium">{p.payee.name}</span>
+                    <span className="min-w-0 truncate text-sm font-medium">{p.payee.name}</span>
                   </div>
                   <div className="mt-0.5 truncate text-xs text-muted">
                     <span className="font-mono">{p.channel}</span>

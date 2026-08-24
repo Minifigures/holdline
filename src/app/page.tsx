@@ -99,14 +99,14 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="grid flex-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)_300px]">
-        <div className="min-h-[420px] lg:h-[calc(100vh-230px)]">
+      <div className="grid flex-1 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[340px_minmax(0,1fr)_300px]">
+        <div className="min-h-[420px] min-w-0 lg:h-[calc(100vh-230px)]">
           <PaymentQueue payments={payments} scores={verdicts} selectedId={selected.id} onSelect={setSelectedId} />
         </div>
-        <div className="min-h-[560px] lg:h-[calc(100vh-230px)]">
+        <div className="min-h-[560px] min-w-0 lg:h-[calc(100vh-230px)]">
           <VerdictCard payment={selected} verdict={verdict} loadingBrief={loading === selected.id} onDecide={decide} />
         </div>
-        <div className="flex flex-col gap-4 lg:h-[calc(100vh-230px)]">
+        <div className="flex min-w-0 flex-col gap-4 lg:h-[calc(100vh-230px)]">
           <MetricsStrip payments={payments} />
           <AuditLog entries={log} />
         </div>
